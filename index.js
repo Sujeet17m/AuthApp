@@ -1,6 +1,6 @@
 // index.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword , signInWithEmailAndPassword ,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /* === Firebase Setup === */
 const firebaseConfig = {
@@ -29,9 +29,13 @@ const passwordInputEl = document.getElementById("password-input");
 const signInButtonEl = document.getElementById("sign-in-btn");
 const createAccountButtonEl = document.getElementById("create-account-btn");
 
+const signOutButtonEl = document.getElementById("sign-out-btn")
+
 signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
 signInButtonEl.addEventListener("click", authSignInWithEmail);
 createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail);
+
+signOutButtonEl.addEventListener("click", authSignOut)
 
 showLoggedOutView();
 
@@ -50,6 +54,23 @@ function authSignInWithGoogle() {
 }
 
 function authSignInWithEmail() {
+  const email = emailInputEl.value;
+  const password = passwordInputEl.value;
+
+  
+signInWithEmailAndPassword(auth, email, password)
+  .then((userCredential) => {
+    // Signed in 
+    const user = userCredential.user;
+    clearAuthFields()
+    showLoggedInView()
+    // ...
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    console.error(errorMessage, errorCode)
+  })
   console.log("Sign in with email and password");
 }
 
@@ -60,9 +81,11 @@ const password = passwordInputEl.value;
 
 
 createUserWithEmailAndPassword(auth, email, password)
-  .then(() => {
+  .then((userCredential) => {
     // Signed up 
+    clearAuthFields()
     showLoggedInView()
+
     // ...
   })
   .catch((error) => {
@@ -75,20 +98,38 @@ createUserWithEmailAndPassword(auth, email, password)
   console.log("Create account with email and password");
 }
 
+function authSignOut(){
+  signOut(auth).then(()=> {
+    showLoggedOutView()
+  }).catch((error)=>{
+    console.error(error.message,error.code)
+  });
+
+}
+
 function showLoggedOutView() {
-  hideElement(viewLoggedIn);
-  showElement(viewLoggedOut);
+  hideview(viewLoggedIn);
+  showview(viewLoggedOut);
 }
 
 function showLoggedInView() {
-  hideElement(viewLoggedOut);
-  showElement(viewLoggedIn);
+  hideview(viewLoggedOut);
+  showview(viewLoggedIn);
 }
 
-function showElement(element) {
+function showview(view) {
   element.style.display = "flex";
 }
 
-function hideElement(element) {
+function hideview(view) {
   element.style.display = "none";
+}
+
+function clearInputField(field){
+  field.value = ""
+}
+
+function clearAuthFields(){
+  clearInputField(emailInputEl)
+  clearInputField(passwordInputEl)
 }
