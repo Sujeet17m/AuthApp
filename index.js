@@ -1,6 +1,6 @@
 // index.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword , signInWithEmailAndPassword ,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword , signInWithEmailAndPassword ,signOut , onAuthStateChanged , updateProfile} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /* === Firebase Setup === */
 const firebaseConfig = {
@@ -12,6 +12,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // console.log(app.options.projectId);
 // console.log(auth);
@@ -35,9 +36,29 @@ signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
 signInButtonEl.addEventListener("click", authSignInWithEmail);
 createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail);
 
-signOutButtonEl.addEventListener("click", authSignOut)
+signOutButtonEl.addEventListener("click", authSignOut);
 
-showLoggedOutView();
+const userProfilePictureEl = document.getElementById("user-profile-picture")
+const userGreetingEl = document.getElementById("user-greeting")
+
+const displayNameInputEl = document.getElementById("display-name-input")
+const photoURLInputEl = document.getElementById("photo-url-input")
+const updateProfileButtonEl = document.getElementById("update-profile-btn")
+
+updateProfileButtonEl.addEventListener("click", authUpdateProfile)
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/auth.user
+    showLoggedInView()
+    showProfilePicture(userProfilePictureEl,user)
+    showUserGreeting(userGreetingEl,user)
+
+  } else {
+    showLoggedOutView()
+  }
+});
 
 /* === Functions === */
 
@@ -46,7 +67,8 @@ function authSignInWithGoogle() {
   signInWithPopup(auth, provider)
     .then(result => {
       console.log("Signed in:", result.user);
-      showLoggedInView();
+
+
     })
     .catch(error => {
       console.error("Google Sign-In Error:", error);
@@ -63,7 +85,7 @@ signInWithEmailAndPassword(auth, email, password)
     // Signed in 
     const user = userCredential.user;
     clearAuthFields()
-    showLoggedInView()
+
     // ...
   })
   .catch((error) => {
@@ -84,7 +106,7 @@ createUserWithEmailAndPassword(auth, email, password)
   .then((userCredential) => {
     // Signed up 
     clearAuthFields()
-    showLoggedInView()
+
 
     // ...
   })
@@ -100,9 +122,23 @@ createUserWithEmailAndPassword(auth, email, password)
 
 function authSignOut(){
   signOut(auth).then(()=> {
-    showLoggedOutView()
+
   }).catch((error)=>{
     console.error(error.message,error.code)
+  });
+
+}
+
+function authUpdateProfile(){
+
+  const newDisplayName = displayNameInputEl.value;
+  const newPhotoURL = photoURLInputEl.value;
+  updateProfile(auth.currentUser, {
+      displayName: newDisplayName, photoURL: newPhotoURL
+  }).then(() => {
+      console.log("Profile updated");
+  }).catch((error) => {
+      console.error(error.message);
   });
 
 }
@@ -118,11 +154,11 @@ function showLoggedInView() {
 }
 
 function showview(view) {
-  element.style.display = "flex";
+  view.style.display = "flex";
 }
 
 function hideview(view) {
-  element.style.display = "none";
+  view.style.display = "none";
 }
 
 function clearInputField(field){
@@ -132,4 +168,25 @@ function clearInputField(field){
 function clearAuthFields(){
   clearInputField(emailInputEl)
   clearInputField(passwordInputEl)
+}
+
+function showProfilePicture(imgElement,user){
+  const photoURL = user.photoURL
+  if (photoURL) {
+    imgElement.src = photoURL
+}else{
+  imgElement.src = "assets/images/default-profile-pic.jpg"
+}
+}
+
+function showUserGreeting(element , user){
+  const displayName = user.displayName;
+  if (displayName) {
+    const userFirstName = displayName.split(" ")[0]
+        
+    element.textContent = `Hey ${userFirstName}, how are you?`
+  } else {
+    element.textContent = `Hey friend, how are you?`
+  }
+
 }
